@@ -87,56 +87,20 @@
       </div>
 
       <div class="body">
-        <button class="login">log in using id.wmo</button>
+        <p>You are now logged in, and can safely close this window</p>
       </div>
     </div>
-
 
     <script id="require-js" data-csrf="{{ csrf }}"></script>
 
     <script>
-      var login = document.querySelector("button.login");
-      login.addEventListener("click", function() {
-        checked = false;
-        window.open(
-          "http://localhost:1234/login/oauth/authorize?" + [
-            "client_id=goggles",
-            "response_type=token",
-            "scopes=user email",
-            "state=goggles"
-          ].join("&"),
-          null,
-          "_blank"
-        );
-      });
-
-      var checked = false;
-      document.addEventListener("focus", function() {
-        if (!checked) {
-          checked = true;
-          var authToken = localStorage["goggles-auth-token"];
-          if (!!authToken) {
-            var xhr = new XMLHttpRequest();
-            xhr.open("GET", "http://localhost:1234/user", true);
-            xhr.setRequestHeader("Authorization", "token " + authToken);
-            xhr.onload = function(evt) {
-              var content = {};
-              try {
-                content = JSON.parse(xhr.response);
-              } catch (e) {
-
-              }
-              var np = document.createElement("p");
-              np.innerHTML = [
-                "<img src=\"" + content.avatar + "\">",
-                "Hi " + content.username+"!"
-              ].join('\n');
-              login.parentNode.replaceChild(np, login);
-            };
-            xhr.send(null);
-          }
+      var tks = location.hash;
+      if (tks) {
+        tks = tks.split("#token=");
+        if (tks[1]) {
+          localStorage["goggles-auth-token"] = tks[1];
         }
-      });
+      }
     </script>
   </body>
 </html>
