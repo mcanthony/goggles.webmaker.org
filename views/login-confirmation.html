@@ -99,8 +99,8 @@
         tks = tks.split("#token=");
         if (tks[1]) {
           localStorage["goggles-auth-token"] = tks[1];
-        }
-      }
+        } else { localStorage.removeItem("goggles-auth-token"); }
+      } else { localStorage.removeItem("goggles-auth-token"); }
     </script>
   </body>
 </html>

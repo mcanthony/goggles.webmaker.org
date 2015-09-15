@@ -129,7 +129,8 @@
               var np = document.createElement("p");
               np.innerHTML = [
                 "<img src=\"" + content.avatar + "\">",
-                "Hi " + content.username+"!"
+                "Hi " + content.username+"!",
+                "(not " + content.username + "?, <span onclick='logout()'>click here</span> to log out"
               ].join('\n');
               login.parentNode.replaceChild(np, login);
             };
@@ -137,6 +138,12 @@
           }
         }
       });
+
+      function logout() {
+        checked = false;
+        window.open("http://localhost:1234/logout?client_id=goggles");
+      }
+
     </script>
   </body>
 </html>
