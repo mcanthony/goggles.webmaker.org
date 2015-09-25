@@ -3,7 +3,6 @@
  */
 function DeferredTimeout(ms) {
   var deferred = jQuery.Deferred();
-
   setTimeout(function() { deferred.resolve(); }, ms);
   return deferred;
 }

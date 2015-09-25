@@ -87,7 +87,9 @@
       </div>
 
       <div class="body">
-        <button class="login">log in using id.wmo</button>
+        <button style="width: 40%; height: 20%;" class="login">log in using id.wmo</button>
+
+        <button style="width: 40%; height: 20%;" class="publish">test publish</button>
       </div>
     </div>
 
@@ -96,6 +98,7 @@
 
     <script>
       var login = document.querySelector("button.login");
+
       login.addEventListener("click", function() {
         checked = false;
         window.open(
@@ -111,39 +114,178 @@
       });
 
       var checked = false;
+      var userdata = false;
+
       document.addEventListener("focus", function() {
         if (!checked) {
           checked = true;
           var authToken = localStorage["goggles-auth-token"];
           if (!!authToken) {
+
             var xhr = new XMLHttpRequest();
             xhr.open("GET", "http://localhost:1234/user", true);
-            xhr.setRequestHeader("Authorization", "token " + authToken);
+            xhr.setRequestHeader("authorization", "token " + authToken);
             xhr.onload = function(evt) {
-              var content = {};
+              userdata = {};
               try {
-                content = JSON.parse(xhr.response);
-              } catch (e) {
+                userdata = JSON.parse(xhr.response);
 
+                setTimeout(function getUserId() {
+                  var login = new XMLHttpRequest();
+                  login.open("POST", "http://localhost:2015/users/login", true);
+                  login.setRequestHeader("Authorization", "token " + authToken);
+                  login.setRequestHeader("Content-Type", "application/json");
+                  login.onload = function(evt) {
+                    try {
+                      var data = JSON.parse(login.response);
+                      console.log("login data:", data);
+                      userdata.id = data.id;
+                    } catch (e) {
+                      console.error("LOGIN", e);
+                      console.trace();
+                    }
+                  };
+                  login.send(JSON.stringify({ "name": userdata.username }));
+                },1);
+
+              } catch (e) {
+                userdata = { avatar: "", username: "x" };
+                console.error("FOCUS XHR", e);
+                console.trace();
               }
               var np = document.createElement("p");
               np.innerHTML = [
-                "<img src=\"" + content.avatar + "\">",
-                "Hi " + content.username+"!",
-                "(not " + content.username + "?, <span onclick='logout()'>click here</span> to log out"
+                "<img src=\"" + userdata.avatar + "\">",
+                "Hi " + userdata.username+"!",
+                "(not " + userdata.username + "?, <span onclick='logout()'>click here</span> to log out"
               ].join('\n');
               login.parentNode.replaceChild(np, login);
             };
             xhr.send(null);
+
           }
         }
       });
 
       function logout() {
         checked = false;
+        userdata = false;
         window.open("http://localhost:1234/logout?client_id=goggles");
       }
 
+      var boundary = 'G0ggl3s';
+
+      function constructMultipartPayload(fields, data) {
+        var payload = '';
+
+        fields.forEach(function(field) {
+          payload += '--' + boundary + '\r\n';
+          payload += 'content-disposition: form-data; name="' + field.name + '"\r\n';
+          payload += '\r\n' + field.content + '\r\n';
+        });
+
+        if (!data) {
+          payload += '--' + boundary + '--\r\n';
+          return payload;
+        }
+
+        payload += '--' + boundary + '\r\n';
+        payload += 'content-disposition: form-data; name="buffer"; ';
+        payload += 'filename="' + data.filename + '"\r\n';
+        payload += 'Content-Type: ' + data.contentType + '\r\n';
+        payload += '\r\n' + data.content + '\r\r\n';
+        payload += '--' + boundary + '--\r\n';
+
+        return payload;
+      }
+
+      var publish = document.querySelector("button.publish");
+      publish.addEventListener("click", function(evt) {
+        var authToken = localStorage["goggles-auth-token"];
+        if (!!authToken) {
+
+            var newProject = new XMLHttpRequest();
+            newProject.open("POST", "http://localhost:2015/projects", true);
+            newProject.setRequestHeader("Authorization", "token " + authToken);
+            newProject.setRequestHeader("Content-Type", "application/json");
+            newProject.onload = function(evt) {
+              try {
+                var data = JSON.parse(newProject.response);
+                console.log(data);
+
+                if(data.id) {
+                  var saveFile = new XMLHttpRequest();
+                  saveFile.open("POST", "http://localhost:2015/files", true);
+                  saveFile.setRequestHeader("Authorization", "token " + authToken);
+                  saveFile.setRequestHeader("Content-Type", "multipart/form-data; boundary=" + boundary);
+
+                  saveFile.onload = function(evt) {
+                    try {
+                      var s3 = new XMLHttpRequest();
+                      s3.open("PUT", "http://localhost:2015/projects/"+ data.id +"/publish", true);
+                      s3.setRequestHeader("Authorization", "token " + authToken);
+                      s3.onload = function(evt) {
+                        try {
+                          var result = JSON.parse(s3.response);
+                          console.log(result);
+                        } catch(e) {
+                          console.error(e);
+                          console.trace();
+                        }
+                      };
+                      s3.send(null);
+                    } catch (e) {
+                      console.error("saveFile", e);
+                      console.trace();
+                    }
+                  };
+
+                  var parts = [
+                    '<!doctype html>',
+                    '<html>',
+                    '  <head>',
+                    '    <meta charset="utf-8">',
+                    '    <title>test</title>',
+                    '  </head>',
+                    '  <body>',
+                    '    <p>test</p>',
+                    '  </body>',
+                    '</html>'
+                  ];
+
+                  var payload = constructMultipartPayload([{
+                    "name": "path",
+                    "content": "index.html"
+                  },{
+                    "name": "project_id",
+                    "content": data.id
+                  }], {
+                    "name": "goggles remix",
+                    "filename": "index.html",
+                    "contentType": "text/html",
+                    "content": parts.join("\n")
+                  });
+
+                  saveFile.send(payload);
+                }
+              } catch (e) {
+                console.error("PUBLISH XHR", e);
+                console.trace();
+              }
+            };
+
+            newProject.send(JSON.stringify({
+              "title": "My Goggles Remix",
+              "user_id": userdata.id,
+              "date_created": "" + Date.now(),
+              "date_updated": "" + Date.now(),
+              "description": "A Goggles remix of " + "<URL GOES HERE>",
+              "readonly": true,
+              "client": "X-Ray Goggles"
+            }));
+
+        } else { console.log("not logged in yet"); }
+      });
     </script>
   </body>
 </html>
