@@ -13,8 +13,6 @@
     "hood": "0.2.1",
     "htmlsanitizer": "0.0.2",
     "less-middleware": "0.1.12",
-    "messina": "0.1.2",
-    "newrelic": "1.7.2",
     "node-statsd": "0.0.7",
     "noxmox": "0.2.4",
     "nunjucks": "0.1.10",

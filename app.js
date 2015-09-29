@@ -1,17 +1,3 @@
-process.env.NEW_RELIC_BROWSER_MONITOR_ENABLE = false;
-
-// New Relic Server monitoring support
-var newrelic;
-if ( process.env.NEW_RELIC_ENABLED ) {
-  newrelic = require( "newrelic" );
-} else {
-  newrelic = {
-    getBrowserTimingHeader: function () {
-      return "<!-- New Relic RUM disabled -->";
-    }
-  };
-}
-
 var express    = require("express"),
     goggles    = require("./lib/goggles"),
     habitat    = require("habitat"),
@@ -49,16 +35,6 @@ nunjucksEnv.addFilter( "instantiate", function( input ) {
     return tmpl.render( this.getVariables() );
 });
 
-// log either to GELF or console
-if (env.get("ENABLE_GELF_LOGS")) {
-  messina = require("messina");
-  logger = messina("goggles.webmaker.org-" + env.get("NODE_ENV") || "development" );
-  logger.init();
-  app.use(logger.middleware());
-} else {
-  app.use(express.logger("dev"));
-}
-
 app.use(helmet.iexss());
 app.use(helmet.contentTypeOptions());
 if (!!env.get("FORCE_SSL") ) {
@@ -90,7 +66,6 @@ app.locals({
   GA_DOMAIN: env.get("GA_DOMAIN"),
   hostname: env.get("APP_HOSTNAME"),
   languages: i18n.getSupportLanguages(),
-  newrelic: newrelic,
   bower_path: "public/bower"
 });
 
@@ -123,7 +98,9 @@ app.get("/login-confirmation.html", function(req, res) {
 
 // intercept webxray's publication dialog - HTML part
 app.get("/uproot-dialog.html", function(req, res) {
-  res.render("uproot-dialog.html");
+  res.render("uproot-dialog.html", {
+    hostname: env.get("APP_HOSTNAME")
+  });
 });
 
 // intercept webxray's publication dialog - JS part
@@ -132,6 +109,13 @@ app.get("/publication.js", function(req, res) {
   res.render("publication.js", {
     idwmoURL: env.get("ID_WMO_URL"),
     publishwmoURL: env.get("PUBLISH_WMO_URL")
+  });
+});
+
+// intercept webxray's publication dialog - HTML part
+app.get("/gogglesnotice.js", function(req, res) {
+  res.render("gogglesnotice.js", {
+    hostname: env.get("APP_HOSTNAME")
   });
 });
 
