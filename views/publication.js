@@ -41,9 +41,11 @@
   function showLoggedInHTML() {
     var container = document.querySelector("span.status.placeholder");
     container.innerHTML = loggedInTemplate;
-    var usernameFields = Array.prototype.slice.call(container.querySelectorAll(".username"));
     container.querySelector("img").src = userdata.avatar;
-    usernameFields.forEach(function(field) { field.textContent = userdata.username; })
+    var usernameFields = Array.prototype.slice.call(container.querySelectorAll(".username"));
+    usernameFields.forEach(function(field) {
+      field.textContent = userdata.username;
+    });
     container.querySelector(".logout.region").addEventListener("click", function(evt) {
       logout();
     });
@@ -208,6 +210,12 @@
       try { data = JSON.parse(stored); }
       catch (e) { return console.error("Error parsing stored data", stored, e); }
 
+      var html = data.html;
+      // Rewrite the title to "...'s remix of ..."
+      html = html.replace(/<title([^>]*)>/, "<title$1>" + userdata.username + "'s remix of ");
+      // Inject the goggles notification, script controlled
+      html = html.replace("</body", "<script src='{{ hostname }}/gogglesnotice.js'></script></body");
+
       var payload = constructMultipartPayload([{
         "name": "path",
         "content": "index.html"
@@ -218,7 +226,7 @@
         "name": "goggles remix",
         "filename": "index.html",
         "contentType": "text/html",
-        "content": data.html
+        "content": html
       });
 
       saveFile.send(payload);
