@@ -87,23 +87,20 @@
       </div>
 
       <div class="body">
-        <span class="status placeholder"></span>
-        <button style="width: 40%; height: 20%;" class="publish">test publish</button>
+        <p>You are now logged in, and can safely close this window</p>
       </div>
     </div>
 
-    <script type="text/html" class="loggedout">
-      <button style="width: 40%; height: 20%;" class="login">log in using id.wmo</button>
-    </script>
+    <script id="require-js" data-csrf="{{ csrf }}"></script>
 
-    <script type="text/html" class="loggedin">
-      <p>
-        <img src="">
-        Hi <span class="username"></span>!
-        (not <span class="username"></span>?, <span class='logout region'>click here to log out</span>)
-      </p>
+    <script>
+      var tks = location.hash;
+      if (tks) {
+        tks = tks.split("#token=");
+        if (tks[1]) {
+          localStorage["goggles-auth-token"] = tks[1];
+        } else { localStorage.removeItem("goggles-auth-token"); }
+      } else { localStorage.removeItem("goggles-auth-token"); }
     </script>
-
-    <script src="publication.js"></script>
   </body>
 </html>

@@ -180,6 +180,16 @@ app.get("/index.html", function(req, res) {
   res.redirect(301, "/");
 });
 
+// oauth login confirmation page
+app.get("/login-confirmation.html", csp, function(req, res) {
+  res.render("login-confirmation.html", {
+    audience: env.get("audience"),
+    csrf: req.csrfToken(),
+    email: (req.session.user && req.session.user.email) || "",
+    personaHost: env.get("PERSONA_HOST")
+  });
+});
+
 // intercept webxray's publication dialog - HTML part
 app.get("/uproot-dialog.html", csp, function(req, res) {
   res.render("uproot-dialog.html", {
