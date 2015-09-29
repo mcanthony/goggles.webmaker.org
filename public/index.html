@@ -1,0 +1,23 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Mozilla's X-Ray Goggles</title>
+  </head>
+  <body>
+    <h1>X-Ray Goggles</h1>
+    <p>They're pretty sweet.</p>
+    <button>Go on, try them</button>
+    <script>
+      var go = document.querySelector("button");
+      go.onclick = function() {
+        var script = document.createElement('script');
+        script.src = './webxray.js';
+        script.className='webxray';
+        script.setAttribute('data-lang','en-US');
+        script.setAttribute('data-baseuri', window.location.protocol + "//" + window.location.host);
+        document.body.appendChild(script);
+      };
+    </script>
+  </body>
+</html>
