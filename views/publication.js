@@ -199,8 +199,14 @@
         publishAPI.publishProject(authToken, project_id);
       };
 
-      var data = localStorage[gogglesDataLabel];
-      var content = data.html;
+      var stored = localStorage[gogglesDataLabel];
+      if (!stored) {
+        return console.error("No publishable data was found in localStorage");
+      }
+
+      var data = false;
+      try { data = JSON.parse(stored); }
+      catch (e) { return console.error("Error parsing stored data", stored, e); }
 
       var payload = constructMultipartPayload([{
         "name": "path",
@@ -212,7 +218,7 @@
         "name": "goggles remix",
         "filename": "index.html",
         "contentType": "text/html",
-        "content": content
+        "content": data.html
       });
 
       saveFile.send(payload);
@@ -277,10 +283,10 @@
   window.addEventListener("message", function(event) {
     var data = JSON.parse(event.data);
     if(data.html && data.originalURL && data.hackpubURL) {
-      localStorage[gogglesDataLabel] = {
+      localStorage[gogglesDataLabel] = JSON.stringify({
         html: data.html,
         url: data.originalURL
-      }
+      });
     }
   });
 
