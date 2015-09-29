@@ -3,8 +3,8 @@
  */
 (function() {
 
-  var idwmo = "http://localhost:1234";
-  var publishwmo = "http://localhost:2015";
+  var idwmo = "{{ idwmoURL }}";
+  var publishwmo = "{{ publishwmoURL }}";
 
   var gogglesDataLabel = "goggles-publish-data";
   var gogglesAuthLabel = "goggles-auth-token";
